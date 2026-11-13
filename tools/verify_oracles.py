@@ -23,11 +23,10 @@ def main() -> int:
         solutions.mkdir()
         (solutions / "__init__.py").write_text("", encoding="utf-8")
         for source in sorted((BANK / "solutions").glob("q*.py")):
-            function = source.stem.split("_", 1)[1]
             wrapper = (
                 "import sys\n"
                 f"sys.path.insert(0, {str(TOOLS)!r})\n"
-                f"from oracles.impl import {function}, OpenCVError\n"
+                "from oracles.impl import *\n"
             )
             (solutions / source.name).write_text(wrapper, encoding="utf-8")
         sys.path.insert(0, str(temp))

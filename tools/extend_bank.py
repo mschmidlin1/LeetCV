@@ -320,16 +320,16 @@ def extend_special(path: Path, question: str) -> str:
     methods: list[str] = []
     imports: list[str] = []
 
-    if question == "q001_read_dog":
+    if question == "q001_read_image":
         for label, image in (("b", pattern(20, 30, (10, 20, 30))), ("c", pattern(18, 18, (200, 10, 10)))):
             png = case_dir / f"case_{label}.png"
             write_png(png, image)
-            np.save(case_dir / f"case_{label}_expected.npy", impl.read_dog(str(png)))
+            np.save(case_dir / f"case_{label}_expected.npy", impl.read_color(str(png)))
             methods.append(
                 textwrap.dedent(
                     f"""\
                     def test_case_{label}(self):
-                        actual = read_dog(str(CASE / 'case_{label}.png'))
+                        actual = read_color(str(CASE / 'case_{label}.png'))
                         expected = np.load(CASE / 'case_{label}_expected.npy')
                         np.testing.assert_array_equal(actual, expected)
                     """
@@ -768,7 +768,7 @@ def extend_special(path: Path, question: str) -> str:
 
 def main() -> None:
     specials = {
-        "q001_read_dog",
+        "q001_read_image",
         "q004_save_image",
         "q012_rotation_matrix",
         "q044_read_frames",

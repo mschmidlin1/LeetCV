@@ -19,8 +19,16 @@ def gray(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
-def read_dog(path: str) -> np.ndarray:
+def read_color(path: str) -> np.ndarray:
     return cv2.imread(path, cv2.IMREAD_COLOR)
+
+
+def read_greyscale(path: str) -> np.ndarray:
+    return cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+
+
+def read_16bit(path: str) -> np.ndarray:
+    return cv2.imread(path, cv2.IMREAD_UNCHANGED)
 
 
 def set_region(image: np.ndarray) -> np.ndarray:
@@ -33,18 +41,42 @@ def save_image(image: np.ndarray, path: str) -> None:
     cv2.imwrite(path, image)
 
 
+def save_jpeg(image: np.ndarray, path: str) -> None:
+    cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+
+
 def to_gray(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+def to_rgb(image: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 
 def to_hsv(image: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
 
-def resize_keep_aspect(image: np.ndarray, width: int) -> np.ndarray:
+def hsv_to_bgr(image: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+
+
+def _resize_aspect(image: np.ndarray, width: int, interpolation: int) -> np.ndarray:
     height, original_width = image.shape[:2]
     new_height = int(height * width / original_width)
-    return cv2.resize(image, (int(width), new_height), interpolation=cv2.INTER_LINEAR)
+    return cv2.resize(image, (int(width), new_height), interpolation=interpolation)
+
+
+def resize_keep_aspect(image: np.ndarray, width: int) -> np.ndarray:
+    return _resize_aspect(image, width, cv2.INTER_LINEAR)
+
+
+def resize_nearest(image: np.ndarray, width: int) -> np.ndarray:
+    return _resize_aspect(image, width, cv2.INTER_NEAREST)
+
+
+def resize_area(image: np.ndarray, width: int) -> np.ndarray:
+    return _resize_aspect(image, width, cv2.INTER_AREA)
 
 
 def crop_image(image: np.ndarray) -> np.ndarray:
@@ -53,6 +85,15 @@ def crop_image(image: np.ndarray) -> np.ndarray:
 
 def split_and_merge(image: np.ndarray) -> np.ndarray:
     return cv2.merge(cv2.split(image))
+
+
+def swap_rb(image: np.ndarray) -> np.ndarray:
+    blue, green, red = cv2.split(image)
+    return cv2.merge([red, green, blue])
+
+
+def blue_channel(image: np.ndarray) -> np.ndarray:
+    return cv2.split(image)[0]
 
 
 def normalize_image(image: np.ndarray) -> np.ndarray:
@@ -82,6 +123,16 @@ def binary_threshold(image: np.ndarray, thresh: int) -> np.ndarray:
     return binary
 
 
+def binary_inv(image: np.ndarray, thresh: int) -> np.ndarray:
+    _value, binary = cv2.threshold(gray(image), thresh, 255, cv2.THRESH_BINARY_INV)
+    return binary
+
+
+def otsu_threshold(image: np.ndarray) -> np.ndarray:
+    _value, binary = cv2.threshold(gray(image), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return binary
+
+
 def gaussian_blur(image: np.ndarray, ksize: int) -> np.ndarray:
     return cv2.GaussianBlur(image, (int(ksize), int(ksize)), 0)
 
@@ -89,6 +140,12 @@ def gaussian_blur(image: np.ndarray, ksize: int) -> np.ndarray:
 def adaptive_threshold(image: np.ndarray) -> np.ndarray:
     return cv2.adaptiveThreshold(
         gray(image), 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+
+
+def adaptive_mean(image: np.ndarray) -> np.ndarray:
+    return cv2.adaptiveThreshold(
+        gray(image), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
     )
 
 
@@ -101,6 +158,10 @@ def equalize_hist(image: np.ndarray) -> np.ndarray:
     return cv2.equalizeHist(gray(image))
 
 
+def clahe(image: np.ndarray) -> np.ndarray:
+    return cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray(image))
+
+
 def mask_hsv(image: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     return cv2.inRange(hsv, lower, upper)
@@ -110,9 +171,20 @@ def apply_kernel(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
     return cv2.filter2D(image, -1, kernel)
 
 
+def _morph_kernel() -> np.ndarray:
+    return np.ones((3, 3), np.uint8)
+
+
 def dilate_image(image: np.ndarray) -> np.ndarray:
-    kernel = np.ones((3, 3), np.uint8)
-    return cv2.dilate(gray(image), kernel, iterations=1)
+    return cv2.dilate(gray(image), _morph_kernel(), iterations=1)
+
+
+def erode_image(image: np.ndarray) -> np.ndarray:
+    return cv2.erode(gray(image), _morph_kernel(), iterations=1)
+
+
+def morph_open(image: np.ndarray) -> np.ndarray:
+    return cv2.morphologyEx(gray(image), cv2.MORPH_OPEN, _morph_kernel())
 
 
 def median_blur(image: np.ndarray, ksize: int) -> np.ndarray:
@@ -136,6 +208,11 @@ def contour_count(image: np.ndarray) -> int:
     return len(contours)
 
 
+def contour_all(image: np.ndarray) -> int:
+    contours, _hierarchy = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    return len(contours)
+
+
 def draw_contours(image: np.ndarray) -> np.ndarray:
     out = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     contours, _hierarchy = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -155,6 +232,16 @@ def hough_lines(image: np.ndarray) -> np.ndarray:
         return np.zeros((0, 2), np.float32)
     rows = lines.reshape(-1, 2).astype(np.float32)
     order = np.lexsort((rows[:, 1], rows[:, 0]))
+    return rows[order]
+
+
+def hough_lines_p(image: np.ndarray) -> np.ndarray:
+    edges = cv2.Canny(gray(image), 50, 150)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 30, minLineLength=20, maxLineGap=5)
+    if lines is None:
+        return np.zeros((0, 4), np.int32)
+    rows = lines.reshape(-1, 4).astype(np.int32)
+    order = np.lexsort((rows[:, 3], rows[:, 2], rows[:, 1], rows[:, 0]))
     return rows[order]
 
 
@@ -195,6 +282,14 @@ def affine_warp(image: np.ndarray) -> np.ndarray:
 
 def flip_horizontal(image: np.ndarray) -> np.ndarray:
     return cv2.flip(image, 1)
+
+
+def flip_vertical(image: np.ndarray) -> np.ndarray:
+    return cv2.flip(image, 0)
+
+
+def flip_both(image: np.ndarray) -> np.ndarray:
+    return cv2.flip(image, -1)
 
 
 def perspective_warp(image: np.ndarray) -> np.ndarray:
@@ -380,6 +475,12 @@ def template_top_left(image: np.ndarray, template: np.ndarray) -> tuple[int, int
     result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
     _min_val, _max_val, _min_loc, max_loc = cv2.minMaxLoc(result)
     return (int(max_loc[0]), int(max_loc[1]))
+
+
+def template_sqdiff(image: np.ndarray, template: np.ndarray) -> tuple[int, int]:
+    result = cv2.matchTemplate(image, template, cv2.TM_SQDIFF)
+    _min_val, _max_val, min_loc, _max_loc = cv2.minMaxLoc(result)
+    return (int(min_loc[0]), int(min_loc[1]))
 
 
 def template_draw(image: np.ndarray, template: np.ndarray) -> np.ndarray:
@@ -620,6 +721,10 @@ def brighten(image: np.ndarray, amount: int) -> np.ndarray:
     return np.clip(image.astype(np.int16) + int(amount), 0, 255).astype(np.uint8)
 
 
+def wrap_add(image: np.ndarray, amount: int) -> np.ndarray:
+    return np.add(image, np.uint8(amount))
+
+
 def blur_frames(frames: np.ndarray) -> np.ndarray:
     blurred = [cv2.GaussianBlur(frame, (5, 5), 0) for frame in frames]
     return np.stack(blurred, axis=0)
@@ -760,6 +865,11 @@ def inpaint(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return cv2.inpaint(image, damaged, 3, cv2.INPAINT_TELEA)
 
 
+def inpaint_ns(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    damaged = np.where(mask != 0, 255, 0).astype(np.uint8)
+    return cv2.inpaint(image, damaged, 3, cv2.INPAINT_NS)
+
+
 def channel_histogram(image: np.ndarray, channel: int) -> np.ndarray:
     histogram = cv2.calcHist([image], [int(channel)], None, [256], [0, 256])
     return histogram.reshape(256, 1)
@@ -813,6 +923,10 @@ def sobel_gradients(image: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     grad_x = cv2.Sobel(gray_image, cv2.CV_32F, 1, 0, ksize=3)
     grad_y = cv2.Sobel(gray_image, cv2.CV_32F, 0, 1, ksize=3)
     return grad_x, grad_y
+
+
+def laplacian(image: np.ndarray) -> np.ndarray:
+    return cv2.Laplacian(gray(image), cv2.CV_32F, ksize=3)
 
 
 def mosaic(image: np.ndarray, block_size: int) -> np.ndarray:

@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 CASE = ROOT / "fixtures" / "cases" / "q005"
 
-from solutions.q005_to_gray import to_gray
+from solutions.q005_to_gray import to_gray, to_rgb
 
 
 class TestQ005(unittest.TestCase):
@@ -18,19 +18,21 @@ class TestQ005(unittest.TestCase):
         actual = to_gray(image)
         expected = np.load(CASE / 'expected.npy')
         np.testing.assert_array_equal(actual, expected)
-
+        np.testing.assert_array_equal(to_rgb(image), np.load(CASE / 'expected_rgb.npy'))
 
     def test_case_b(self):
         image = np.load(CASE / 'case_b_image.npy')
         actual = to_gray(image)
         expected = np.load(CASE / 'case_b_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(to_rgb(image), np.load(CASE / 'case_b_expected_rgb.npy'))
 
     def test_case_c(self):
         image = np.load(CASE / 'case_c_image.npy')
         actual = to_gray(image)
         expected = np.load(CASE / 'case_c_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(to_rgb(image), np.load(CASE / 'case_c_expected_rgb.npy'))
 
 
 if __name__ == "__main__":

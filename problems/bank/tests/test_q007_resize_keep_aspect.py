@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 CASE = ROOT / "fixtures" / "cases" / "q007"
 
-from solutions.q007_resize_keep_aspect import resize_keep_aspect
+from solutions.q007_resize_keep_aspect import resize_keep_aspect, resize_nearest, resize_area
 
 
 class TestQ007(unittest.TestCase):
@@ -18,19 +18,24 @@ class TestQ007(unittest.TestCase):
         actual = resize_keep_aspect(image, 30)
         expected = np.load(CASE / 'expected.npy')
         np.testing.assert_array_equal(actual, expected)
-
+        np.testing.assert_array_equal(resize_nearest(image, 30), np.load(CASE / 'expected_nearest.npy'))
+        np.testing.assert_array_equal(resize_area(image, 30), np.load(CASE / 'expected_area.npy'))
 
     def test_case_b(self):
         image = np.load(CASE / 'case_b_image.npy')
         actual = resize_keep_aspect(image, 30)
         expected = np.load(CASE / 'case_b_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(resize_nearest(image, 30), np.load(CASE / 'case_b_expected_nearest.npy'))
+        np.testing.assert_array_equal(resize_area(image, 30), np.load(CASE / 'case_b_expected_area.npy'))
 
     def test_case_c(self):
         image = np.load(CASE / 'case_c_image.npy')
         actual = resize_keep_aspect(image, 30)
         expected = np.load(CASE / 'case_c_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(resize_nearest(image, 30), np.load(CASE / 'case_c_expected_nearest.npy'))
+        np.testing.assert_array_equal(resize_area(image, 30), np.load(CASE / 'case_c_expected_area.npy'))
 
 
 if __name__ == "__main__":

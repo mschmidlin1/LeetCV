@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 CASE = ROOT / "fixtures" / "cases" / "q127"
 
-from solutions.q127_inpaint import inpaint
+from solutions.q127_inpaint import inpaint, inpaint_ns
 
 
 class TestQ127(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestQ127(unittest.TestCase):
         actual = inpaint(image, mask)
         expected = np.load(CASE / 'expected.npy')
         np.testing.assert_array_equal(actual, expected)
-
+        np.testing.assert_array_equal(inpaint_ns(image, mask), np.load(CASE / 'expected_ns.npy'))
 
     def test_case_b(self):
         image = np.load(CASE / 'case_b_image.npy')
@@ -27,6 +27,7 @@ class TestQ127(unittest.TestCase):
         actual = inpaint(image, mask)
         expected = np.load(CASE / 'case_b_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(inpaint_ns(image, mask), np.load(CASE / 'case_b_expected_ns.npy'))
 
     def test_case_c(self):
         image = np.load(CASE / 'case_c_image.npy')
@@ -34,6 +35,7 @@ class TestQ127(unittest.TestCase):
         actual = inpaint(image, mask)
         expected = np.load(CASE / 'case_c_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(inpaint_ns(image, mask), np.load(CASE / 'case_c_expected_ns.npy'))
 
 
 if __name__ == "__main__":

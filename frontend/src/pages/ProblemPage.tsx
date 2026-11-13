@@ -224,7 +224,7 @@ export function ProblemPage() {
               <p className="eyebrow">
                 {problem.number}. {problem.topic}
               </p>
-              <h1>{problem.title}</h1>
+              <h1>{renderInline(problem.title)}</h1>
               <div className="tags">
                 <span className={`pill ${problem.status}`}>{labelStatus(problem.status)}</span>
                 <span className="pill">{problem.type === "code" ? "Code" : "Critical thinking"}</span>
@@ -255,10 +255,38 @@ function Results({ result }: { result: GradeResult | null }) {
             <strong>{prettyName(test.name)}</strong>
             <span>{test.duration_ms} ms</span>
           </header>
-          {test.stdout && <pre>{test.stdout}</pre>}
-          {test.traceback && <pre>{test.traceback}</pre>}
+          <Returns items={test.returns ?? []} />
+          <Stream label="stdout" text={test.stdout ?? ""} />
+          <Stream label="stderr" text={test.stderr ?? ""} />
+          {test.traceback ? <Stream label="Traceback" text={test.traceback} /> : null}
         </article>
       ))}
+    </div>
+  );
+}
+
+function Returns({ items }: { items: { function: string; value?: string; raised?: string }[] }) {
+  return (
+    <div className="io">
+      <p className="io-label">Returned</p>
+      {items.length === 0 ? (
+        <p className="io-empty">The function was not called.</p>
+      ) : (
+        items.map((item, index) => (
+          <pre key={index}>
+            {item.function}: {item.raised ? `raised ${item.raised}` : item.value}
+          </pre>
+        ))
+      )}
+    </div>
+  );
+}
+
+function Stream({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="io">
+      <p className="io-label">{label}</p>
+      {text.trim() ? <pre>{text}</pre> : <p className="io-empty">empty</p>}
     </div>
   );
 }

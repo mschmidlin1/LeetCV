@@ -18,11 +18,19 @@ export type ProblemDetail = ProblemSummary & {
   essay: string;
 };
 
+export type ReturnValue = {
+  function: string;
+  value?: string;
+  raised?: string;
+};
+
 export type TestRow = {
   name: string;
   passed: boolean;
   traceback: string;
   stdout: string;
+  stderr: string;
+  returns: ReturnValue[];
   duration_ms: number;
 };
 
@@ -31,6 +39,7 @@ export type GradeResult = {
   status: ProblemStatus;
   tests: TestRow[];
   stdout: string;
+  stderr: string;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

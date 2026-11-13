@@ -4,3 +4,6 @@ import numpy as np
 
 def equalize_hist(image: np.ndarray) -> np.ndarray:
     raise NotImplementedError
+
+def clahe(image: np.ndarray) -> np.ndarray:
+    raise NotImplementedError

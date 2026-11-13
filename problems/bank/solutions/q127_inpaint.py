@@ -4,3 +4,6 @@ import numpy as np
 
 def inpaint(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     raise NotImplementedError
+
+def inpaint_ns(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    raise NotImplementedError

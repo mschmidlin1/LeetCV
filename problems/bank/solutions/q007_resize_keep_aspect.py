@@ -4,3 +4,9 @@ import numpy as np
 
 def resize_keep_aspect(image: np.ndarray, width: int) -> np.ndarray:
     raise NotImplementedError
+
+def resize_nearest(image: np.ndarray, width: int) -> np.ndarray:
+    raise NotImplementedError
+
+def resize_area(image: np.ndarray, width: int) -> np.ndarray:
+    raise NotImplementedError

@@ -4,3 +4,6 @@ import numpy as np
 
 def hough_lines(image: np.ndarray) -> np.ndarray:
     raise NotImplementedError
+
+def hough_lines_p(image: np.ndarray) -> np.ndarray:
+    raise NotImplementedError

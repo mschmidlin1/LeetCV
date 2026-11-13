@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 CASE = ROOT / "fixtures" / "cases" / "q016"
 
-from solutions.q016_adaptive_threshold import adaptive_threshold
+from solutions.q016_adaptive_threshold import adaptive_threshold, adaptive_mean
 
 
 class TestQ016(unittest.TestCase):
@@ -18,19 +18,21 @@ class TestQ016(unittest.TestCase):
         actual = adaptive_threshold(image)
         expected = np.load(CASE / 'expected.npy')
         np.testing.assert_array_equal(actual, expected)
-
+        np.testing.assert_array_equal(adaptive_mean(image), np.load(CASE / 'expected_mean.npy'))
 
     def test_case_b(self):
         image = np.load(CASE / 'case_b_image.npy')
         actual = adaptive_threshold(image)
         expected = np.load(CASE / 'case_b_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(adaptive_mean(image), np.load(CASE / 'case_b_expected_mean.npy'))
 
     def test_case_c(self):
         image = np.load(CASE / 'case_c_image.npy')
         actual = adaptive_threshold(image)
         expected = np.load(CASE / 'case_c_expected.npy')
         np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(adaptive_mean(image), np.load(CASE / 'case_c_expected_mean.npy'))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # LeetCV
 
-Personal computer-vision practice site. 106 code problems are judged with the copied unit tests. 14 concept questions are critical thinking: save the written answer, then mark it solved. Progress is one global SQLite record.
+Personal computer-vision practice site. 106 code problems are judged with the copied unit tests. Concept questions are critical thinking: save the written answer, then mark it solved. Progress is one global SQLite record.
 
 ## Run locally
 

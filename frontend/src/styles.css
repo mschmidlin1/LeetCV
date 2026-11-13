@@ -240,9 +240,17 @@ a.row:hover { background: #303030; }
 .results article header strong::before { margin-right: 8px; }
 .results .pass header strong::before { content: "✓"; color: var(--green); }
 .results .fail header strong::before { content: "✕"; color: var(--red); }
+.io { padding: 0 12px 10px; }
+.io-label {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.io-empty { margin: 0; color: var(--muted); font-size: 12px; }
 .results pre {
   margin: 0;
-  padding: 0 12px 12px;
   white-space: pre-wrap;
   color: #d7d7d7;
   font-family: Consolas, monospace;

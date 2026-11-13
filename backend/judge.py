@@ -44,10 +44,13 @@ def grade(problem: Problem, code: str, *, submit: bool) -> dict:
                         "passed": False,
                         "traceback": f"Timed out after {problem['timeout']}s.",
                         "stdout": "",
+                        "stderr": "",
+                        "returns": [],
                         "duration_ms": int(problem["timeout"]) * 1000,
                     }
                 ],
                 "stdout": "",
+                "stderr": "",
             }
         try:
             payload = json.loads(completed.stdout or "{}")
@@ -60,16 +63,20 @@ def grade(problem: Problem, code: str, *, submit: bool) -> dict:
                         "passed": False,
                         "traceback": detail[-12000:],
                         "stdout": "",
+                        "stderr": "",
+                        "returns": [],
                         "duration_ms": 0,
                     }
                 ],
                 "stdout": "",
+                "stderr": "",
             }
         tests = payload.get("tests") or []
         return {
             "passed": bool(tests) and all(item.get("passed") for item in tests),
             "tests": tests,
             "stdout": payload.get("stdout") or "",
+            "stderr": payload.get("stderr") or "",
         }
     finally:
         shutil.rmtree(temp, ignore_errors=True)
