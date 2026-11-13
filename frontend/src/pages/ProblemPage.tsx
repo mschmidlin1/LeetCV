@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import { Link, useOutletContext, useParams } from "react-router-dom";
 import { api, type GradeResult, type ProblemDetail, type ProblemStatus } from "../api";
 import type { OutletContext } from "../App";
+import { SplitPane } from "../SplitPane";
 
 export function ProblemPage() {
   const { id = "" } = useParams();
@@ -16,6 +17,7 @@ export function ProblemPage() {
   const [error, setError] = useState("");
   const dirty = useRef(false);
   const executeRef = useRef<(kind: "run" | "submit") => void>(() => undefined);
+  const narrow = useNarrow();
 
   useEffect(() => {
     let cancelled = false;
@@ -121,113 +123,155 @@ export function ProblemPage() {
   }
   if (!problem) return <main className="problem-missing">Loading…</main>;
 
+  const editor = problem.type === "code" ? (
+    <div className="editor">
+      <Editor
+        height="100%"
+        language="python"
+        theme="vs-dark"
+        value={code}
+        onMount={(editorInstance, monaco) => {
+          editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Quote, () => executeRef.current("run"));
+          editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => executeRef.current("submit"));
+        }}
+        onChange={(value) => {
+          dirty.current = true;
+          setCode(value ?? "");
+        }}
+        options={{
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          padding: { top: 12 },
+          tabSize: 4,
+          automaticLayout: true,
+          fontFamily: "Cascadia Code, Consolas, monospace",
+        }}
+      />
+    </div>
+  ) : (
+    <div className="essay-wrap">
+      <textarea
+        className="essay"
+        value={essay}
+        onChange={(event) => setEssay(event.target.value)}
+        placeholder="Write your answer. Save keeps it as attempted. Mark solved is separate."
+        aria-label="Written answer"
+      />
+    </div>
+  );
+
+  const workspace = (
+    <>
+      <div className="toolbar">
+        {problem.type === "code" ? (
+          <>
+            <button type="button" onClick={() => execute("run")} disabled={busy !== null}>
+              {busy === "run" ? "Running…" : "Run"}
+            </button>
+            <button type="button" className="primary" onClick={() => execute("submit")} disabled={busy !== null}>
+              {busy === "submit" ? "Submitting…" : "Submit"}
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => {
+                dirty.current = true;
+                setCode(problem.starter);
+              }}
+              disabled={busy !== null}
+            >
+              Reset
+            </button>
+            <span className="hint">Ctrl+' run · Ctrl+Enter submit</span>
+          </>
+        ) : (
+          <>
+            <button type="button" onClick={saveEssay} disabled={busy !== null}>
+              {busy === "save" ? "Saving…" : "Save"}
+            </button>
+            <button type="button" className="primary" onClick={markSolved} disabled={busy !== null}>
+              {busy === "solve" ? "Saving…" : "Mark solved"}
+            </button>
+          </>
+        )}
+        {message && <span className={`banner ${result && !result.passed ? "bad" : "good"}`}>{message}</span>}
+        {error && <span className="banner bad">{error}</span>}
+      </div>
+      {problem.type === "code" ? (
+        <SplitPane
+          direction="column"
+          initial={0.62}
+          storageKey="leetcv-results"
+          first={editor}
+          second={<Results result={result} />}
+        />
+      ) : (
+        editor
+      )}
+    </>
+  );
+
   return (
     <main className="workspace">
-      <section className="description">
-        <div className="problem-heading">
-          <p className="eyebrow">
-            {problem.number}. {problem.topic}
-          </p>
-          <h1>{problem.title}</h1>
-          <div className="tags">
-            <span className={`pill ${problem.status}`}>{labelStatus(problem.status)}</span>
-            <span className="pill">{problem.type === "code" ? "Code" : "Critical thinking"}</span>
-            {problem.type === "code" && <span className="pill">{problem.test_count} tests</span>}
-          </div>
-        </div>
-        <Prompt title={problem.title} text={problem.prompt} />
-      </section>
-      <section className="work">
-        <div className="toolbar">
-          {problem.type === "code" ? (
-            <>
-              <button type="button" onClick={() => execute("run")} disabled={busy !== null}>
-                {busy === "run" ? "Running…" : "Run"}
-              </button>
-              <button type="button" className="primary" onClick={() => execute("submit")} disabled={busy !== null}>
-                {busy === "submit" ? "Submitting…" : "Submit"}
-              </button>
-              <button
-                type="button"
-                className="ghost"
-                onClick={() => {
-                  dirty.current = true;
-                  setCode(problem.starter);
-                }}
-                disabled={busy !== null}
-              >
-                Reset
-              </button>
-              <span className="hint">Ctrl+' run · Ctrl+Enter submit</span>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={saveEssay} disabled={busy !== null}>
-                {busy === "save" ? "Saving…" : "Save"}
-              </button>
-              <button type="button" className="primary" onClick={markSolved} disabled={busy !== null}>
-                {busy === "solve" ? "Saving…" : "Mark solved"}
-              </button>
-            </>
-          )}
-          {message && <span className={`banner ${result && !result.passed ? "bad" : "good"}`}>{message}</span>}
-          {error && <span className="banner bad">{error}</span>}
-        </div>
-        {problem.type === "code" ? (
-          <div className="editor">
-            <Editor
-              language="python"
-              theme="vs-dark"
-              value={code}
-              onMount={(editor, monaco) => {
-                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Quote, () => executeRef.current("run"));
-                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => executeRef.current("submit"));
-              }}
-              onChange={(value) => {
-                dirty.current = true;
-                setCode(value ?? "");
-              }}
-              options={{
-                fontSize: 14,
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                padding: { top: 12 },
-                tabSize: 4,
-                automaticLayout: true,
-                fontFamily: "Cascadia Code, Consolas, monospace",
-              }}
-            />
-          </div>
-        ) : (
-          <textarea
-            className="essay"
-            value={essay}
-            onChange={(event) => setEssay(event.target.value)}
-            placeholder="Write your answer. Save keeps it as attempted. Mark solved is separate."
-            aria-label="Written answer"
-          />
-        )}
-        {result && (
-          <div className="results">
-            <div className="results-head">
-              {result.tests.filter((test) => test.passed).length} / {result.tests.length} passed
-              {result.stdout ? "" : ""}
+      <SplitPane
+        direction={narrow ? "column" : "row"}
+        initial={narrow ? 0.38 : 0.4}
+        storageKey={narrow ? "leetcv-main-narrow" : "leetcv-main"}
+        first={
+          <section className="description">
+            <div className="problem-heading">
+              <p className="eyebrow">
+                {problem.number}. {problem.topic}
+              </p>
+              <h1>{problem.title}</h1>
+              <div className="tags">
+                <span className={`pill ${problem.status}`}>{labelStatus(problem.status)}</span>
+                <span className="pill">{problem.type === "code" ? "Code" : "Critical thinking"}</span>
+                {problem.type === "code" && <span className="pill">{problem.test_count} tests</span>}
+              </div>
             </div>
-            {result.tests.map((test) => (
-              <article key={test.name} className={test.passed ? "pass" : "fail"}>
-                <header>
-                  <strong>{prettyName(test.name)}</strong>
-                  <span>{test.duration_ms} ms</span>
-                </header>
-                {test.stdout && <pre>{test.stdout}</pre>}
-                {test.traceback && <pre>{test.traceback}</pre>}
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+            <Prompt title={problem.title} text={problem.prompt} />
+          </section>
+        }
+        second={<section className="work">{workspace}</section>}
+      />
     </main>
   );
+}
+
+function Results({ result }: { result: GradeResult | null }) {
+  if (!result) {
+    return <div className="results results-empty">Run checks the sample case. Submit runs every test.</div>;
+  }
+  return (
+    <div className="results">
+      <div className="results-head">
+        {result.tests.filter((test) => test.passed).length} / {result.tests.length} passed
+      </div>
+      {result.tests.map((test) => (
+        <article key={test.name} className={test.passed ? "pass" : "fail"}>
+          <header>
+            <strong>{prettyName(test.name)}</strong>
+            <span>{test.duration_ms} ms</span>
+          </header>
+          {test.stdout && <pre>{test.stdout}</pre>}
+          {test.traceback && <pre>{test.traceback}</pre>}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function useNarrow() {
+  const [narrow, setNarrow] = useState(() => window.matchMedia("(max-width: 800px)").matches);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 800px)");
+    const apply = () => setNarrow(query.matches);
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
+  return narrow;
 }
 
 function labelStatus(status: ProblemStatus) {
