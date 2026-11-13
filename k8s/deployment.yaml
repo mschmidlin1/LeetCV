@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leetcv
+  namespace: leetcv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leetcv
+  template:
+    metadata:
+      labels:
+        app: leetcv
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/mschmidlin1/leetcv:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: LEETCV_DATA
+              value: /data
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      volumes:
+        - name: data
+          hostPath:
+            # Rename this to the Mint folder before the first deploy.
+            path: /home/mike/leetcv-data
+            type: DirectoryOrCreate
