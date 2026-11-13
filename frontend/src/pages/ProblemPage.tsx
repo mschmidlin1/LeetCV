@@ -7,7 +7,8 @@ import { SplitPane } from "../SplitPane";
 
 export function ProblemPage() {
   const { id = "" } = useParams();
-  const { reload } = useOutletContext<OutletContext>();
+  const { problems, reload } = useOutletContext<OutletContext>();
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
   const [code, setCode] = useState("");
   const [essay, setEssay] = useState("");
@@ -18,6 +19,10 @@ export function ProblemPage() {
   const dirty = useRef(false);
   const executeRef = useRef<(kind: "run" | "submit") => void>(() => undefined);
   const narrow = useNarrow();
+
+  useEffect(() => {
+    bodyRef.current?.scrollTo(0, 0);
+  }, [id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,6 +128,20 @@ export function ProblemPage() {
   }
   if (!problem) return <main className="problem-missing">Loading…</main>;
 
+  const current = problem;
+  const index = problems.findIndex((item) => item.id === current.id);
+  const previous = index > 0 ? problems[index - 1] : null;
+  const next = index >= 0 && index < problems.length - 1 ? problems[index + 1] : null;
+
+  function keepDraft() {
+    if (current.type === "code" && dirty.current) {
+      void api.saveCode(current.id, code);
+    }
+    if (current.type === "critical_thinking" && essay !== current.essay) {
+      void api.saveEssay(current.id, essay);
+    }
+  }
+
   const editor = problem.type === "code" ? (
     <div className="editor">
       <Editor
@@ -220,18 +239,24 @@ export function ProblemPage() {
         storageKey={narrow ? "leetcv-main-narrow" : "leetcv-main"}
         first={
           <section className="description">
-            <div className="problem-heading">
-              <p className="eyebrow">
-                {problem.number}. {problem.topic}
-              </p>
-              <h1>{renderInline(problem.title)}</h1>
-              <div className="tags">
-                <span className={`pill ${problem.status}`}>{labelStatus(problem.status)}</span>
-                <span className="pill">{problem.type === "code" ? "Code" : "Critical thinking"}</span>
-                {problem.type === "code" && <span className="pill">{problem.test_count} tests</span>}
+            <div className="problem-body" ref={bodyRef}>
+              <div className="problem-heading">
+                <p className="eyebrow">
+                  {problem.number}. {problem.topic}
+                </p>
+                <h1>{renderInline(problem.title)}</h1>
+                <div className="tags">
+                  <span className={`pill ${problem.status}`}>{labelStatus(problem.status)}</span>
+                  <span className="pill">{problem.type === "code" ? "Code" : "Critical thinking"}</span>
+                  {problem.type === "code" && <span className="pill">{problem.test_count} tests</span>}
+                </div>
               </div>
+              <Prompt title={problem.title} text={problem.prompt} />
             </div>
-            <Prompt title={problem.title} text={problem.prompt} />
+            <nav className="problem-nav" aria-label="Problems">
+              <ProblemLink problem={previous} direction="previous" onLeave={keepDraft} />
+              <ProblemLink problem={next} direction="next" onLeave={keepDraft} />
+            </nav>
           </section>
         }
         second={<section className="work">{workspace}</section>}
@@ -288,6 +313,40 @@ function Stream({ label, text }: { label: string; text: string }) {
       <p className="io-label">{label}</p>
       {text.trim() ? <pre>{text}</pre> : <p className="io-empty">empty</p>}
     </div>
+  );
+}
+
+function ProblemLink({
+  problem,
+  direction,
+  onLeave,
+}: {
+  problem: { id: string; number: number; title: string } | null;
+  direction: "previous" | "next";
+  onLeave: () => void;
+}) {
+  const label = direction === "previous" ? "Previous" : "Next";
+  if (!problem) {
+    return (
+      <button type="button" className={`nav-btn ${direction}`} disabled>
+        {direction === "previous" && <span aria-hidden="true">←</span>}
+        {label}
+        {direction === "next" && <span aria-hidden="true">→</span>}
+      </button>
+    );
+  }
+  return (
+    <Link
+      className={`nav-btn ${direction}`}
+      to={`/problems/${problem.id}`}
+      aria-label={`${label}: ${problem.number}. ${problem.title}`}
+      title={`${problem.number}. ${problem.title}`}
+      onClick={onLeave}
+    >
+      {direction === "previous" && <span aria-hidden="true">←</span>}
+      {label}
+      {direction === "next" && <span aria-hidden="true">→</span>}
+    </Link>
   );
 }
 
